@@ -1,16 +1,15 @@
 :root {
   color-scheme: light;
   --font-sans: "Anthropic Sans", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  /* Claude's actual light-theme (beige) surface/text colors, sampled from
-     claude.ai's computed styles, forced regardless of system dark mode.
-     Accent is emerald green instead of Claude's clay/orange. */
-  --bg: #f8f8f6;
+  /* Stronger/deeper beige than Claude's actual (near-white) surface color,
+     forced regardless of system dark mode. Accent is kelly green. */
+  --bg: #e8dfc8;
   --fg: #121212;
   --muted: #6b6a65;
-  --border: rgba(31, 31, 30, 0.14);
-  --done: #a8a7a0;
-  --accent: #10b981;
-  --accent-emphasized: #047857;
+  --border: rgba(31, 31, 30, 0.18);
+  --done: #8f8b7a;
+  --accent: #4cbb17;
+  --accent-emphasized: #3a8f11;
 }
 
 * { box-sizing: border-box; }
