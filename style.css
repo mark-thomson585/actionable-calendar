@@ -1,28 +1,33 @@
 :root {
   color-scheme: light dark;
-  --bg: #ffffff;
-  --fg: #1a1a1a;
-  --muted: #888;
-  --border: #e2e2e2;
-  --done: #b6b6b6;
-  --accent: #3b6fe0;
+  --font-sans: "Anthropic Sans", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Claude's actual light-theme surface/text colors, sampled from claude.ai's
+     computed styles, with their clay/orange accent swapped for olive green. */
+  --bg: #f8f8f6;
+  --fg: #121212;
+  --muted: #6b6a65;
+  --border: rgba(31, 31, 30, 0.14);
+  --done: #a8a7a0;
+  --accent: #6b8e23;
+  --accent-emphasized: #56701c;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #16171a;
-    --fg: #eaeaea;
-    --muted: #999;
-    --border: #333;
-    --done: #555;
-    --accent: #6d93ef;
+    --bg: #1f1f1e;
+    --fg: #f8f8f6;
+    --muted: #a3a29c;
+    --border: rgba(248, 248, 246, 0.16);
+    --done: #6f6e69;
+    --accent: #a8b84a;
+    --accent-emphasized: #c2d065;
   }
 }
 
 * { box-sizing: border-box; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--fg);
   max-width: 640px;
@@ -78,7 +83,7 @@ section#goals h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0
 
 .item:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
 
-.item input[type="checkbox"] { margin-top: 3px; }
+.item input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); }
 
 .item .text { flex: 1; line-height: 1.35; }
 
