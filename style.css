@@ -1,27 +1,16 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --font-sans: "Anthropic Sans", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  /* Claude's actual light-theme surface/text colors, sampled from claude.ai's
-     computed styles, with their clay/orange accent swapped for olive green. */
+  /* Claude's actual light-theme (beige) surface/text colors, sampled from
+     claude.ai's computed styles, forced regardless of system dark mode.
+     Accent is emerald green instead of Claude's clay/orange. */
   --bg: #f8f8f6;
   --fg: #121212;
   --muted: #6b6a65;
   --border: rgba(31, 31, 30, 0.14);
   --done: #a8a7a0;
-  --accent: #6b8e23;
-  --accent-emphasized: #56701c;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1f1f1e;
-    --fg: #f8f8f6;
-    --muted: #a3a29c;
-    --border: rgba(248, 248, 246, 0.16);
-    --done: #6f6e69;
-    --accent: #a8b84a;
-    --accent-emphasized: #c2d065;
-  }
+  --accent: #10b981;
+  --accent-emphasized: #047857;
 }
 
 * { box-sizing: border-box; }
@@ -65,6 +54,8 @@ section#goals h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0
 
 .day h3 {
   font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-emphasized);
   margin: 0 0 6px;
   padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
