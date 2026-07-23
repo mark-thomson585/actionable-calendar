@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>actionable-calendar — realtime test</title>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 500px; margin: 40px auto; }
+  li { padding: 6px 0; }
+  #status { color: #888; font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>Items (live)</h1>
+<div id="status">connecting...</div>
+<ul id="list"></ul>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  const SUPABASE_URL = 'https://mmnjybuvugljecorkoss.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_AuKmTTUz9HSTG-1pIllqug_9DwOhE3f';
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const list = document.getElementById('list');
+  const status = document.getElementById('status');
+
+  function render(items) {
+    list.innerHTML = '';
+    for (const item of items) {
+      const li = document.createElement('li');
+      li.textContent = `[${item.type}] ${item.text} — ${item.date ?? 'no date'} (${item.status})`;
+      list.appendChild(li);
+    }
+  }
+
+  async function loadAll() {
+    const { data, error } = await supabase.from('items').select('*').order('date');
+    if (error) { status.textContent = 'error: ' + error.message; return; }
+    render(data);
+  }
+
+  await loadAll();
+  status.textContent = 'live';
+
+  supabase
+    .channel('items-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, () => {
+      status.textContent = 'update received @ ' + new Date().toLocaleTimeString();
+      loadAll();
+    })
+    .subscribe();
+</script>
+</body>
+</html>
