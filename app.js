@@ -74,9 +74,12 @@ function itemsByDate(items) {
 
 // Decides how each timed item in a single day should render: 'point' (plain
 // line, just prefixed with a time), 'range' (two-line block), 'prong' (a
-// solo range overlapping only a point, own short branch), or 'cluster' (two
-// or more ranges that overlap each other — directly or transitively — share
-// one backwards-C bracket instead of each drawing its own separate branch).
+// solo range overlapping only a point, own short branch), 'cluster' (two or
+// more one-off ranges that overlap each other — directly or transitively —
+// share one backwards-C bracket), or 'anchor' (a daily weekday-routine item
+// that a one-off item's time genuinely overlaps — the one-off branches off
+// to the right instead of crowding the left list; daily items always stay
+// on the left regardless).
 function layoutDayItems(dayItems) {
   const timed = dayItems.filter((i) => i.start_time);
   const untimed = dayItems.filter((i) => !i.start_time);
@@ -90,10 +93,28 @@ function layoutDayItems(dayItems) {
     return aStart < bEnd && bStart < aEnd;
   }
 
-  const ranges = timed.filter((i) => i.end_time);
-  const points = timed.filter((i) => !i.end_time);
+  const dailyItems = timed.filter((i) => i.repeat_rule === 'weekday');
+  const otherTimed = timed.filter((i) => i.repeat_rule !== 'weekday');
 
-  // Union-find over ranges only — clusters form from range-to-range overlap.
+  // A one-off item only branches right if it genuinely overlaps a daily
+  // item's time; otherwise it's laid out normally among the other one-offs.
+  const dailyBranches = new Map();
+  const attached = new Set();
+  for (const preset of otherTimed) {
+    const dailyMatch = dailyItems.find((d) => overlaps(preset, d));
+    if (dailyMatch) {
+      if (!dailyBranches.has(dailyMatch.id)) dailyBranches.set(dailyMatch.id, []);
+      dailyBranches.get(dailyMatch.id).push(preset);
+      attached.add(preset.id);
+    }
+  }
+  const freePresets = otherTimed.filter((i) => !attached.has(i.id));
+
+  const ranges = freePresets.filter((i) => i.end_time);
+  const points = freePresets.filter((i) => !i.end_time);
+
+  // Union-find over free one-off ranges only — clusters form from
+  // range-to-range overlap among items not already claimed by a daily item.
   const parent = new Map(ranges.map((r) => [r.id, r.id]));
   function find(id) {
     while (parent.get(id) !== id) {
@@ -131,12 +152,22 @@ function layoutDayItems(dayItems) {
 
   for (const r of ranges) {
     if (clustered.has(r.id)) continue;
-    const intersects = timed.some((other) => other.id !== r.id && overlaps(r, other));
+    const intersects = freePresets.some((other) => other.id !== r.id && overlaps(r, other));
     laidOut.push({ item: r, mode: intersects ? 'prong' : 'range', sortKey: toMinutes(r.start_time) });
   }
 
   for (const p of points) {
     laidOut.push({ item: p, mode: 'point', sortKey: toMinutes(p.start_time) });
+  }
+
+  for (const d of dailyItems) {
+    const branches = dailyBranches.get(d.id) || [];
+    laidOut.push({
+      item: d,
+      mode: branches.length ? 'anchor' : 'range',
+      branches,
+      sortKey: toMinutes(d.start_time),
+    });
   }
 
   laidOut.sort((a, b) => a.sortKey - b.sortKey);
@@ -315,7 +346,7 @@ function makeClusterRow(item, { branch } = {}) {
 
   const times = document.createElement('span');
   times.className = 'range-times';
-  times.append(
+  times.appendChild(
     makeEditableSpan({
       displayText: fmtTime(item.start_time),
       editValue: item.start_time.slice(0, 5),
@@ -324,15 +355,19 @@ function makeClusterRow(item, { branch } = {}) {
       deleteOnEmpty: false,
       onCommit: (val) => updateItem(item.id, { start_time: val }),
     }),
-    makeEditableSpan({
-      displayText: fmtTime(item.end_time),
-      editValue: item.end_time.slice(0, 5),
-      inputType: 'time',
-      className: 'range-time',
-      deleteOnEmpty: false,
-      onCommit: (val) => updateItem(item.id, { end_time: val }),
-    }),
   );
+  if (item.end_time) {
+    times.appendChild(
+      makeEditableSpan({
+        displayText: fmtTime(item.end_time),
+        editValue: item.end_time.slice(0, 5),
+        inputType: 'time',
+        className: 'range-time',
+        deleteOnEmpty: false,
+        onCommit: (val) => updateItem(item.id, { end_time: val }),
+      }),
+    );
+  }
 
   row.append(checkbox, title, times);
   return { row, times };
@@ -414,6 +449,65 @@ function makeClusterLi({ members }) {
   return li;
 }
 
+// A daily weekday-routine item that one or more one-off items genuinely
+// overlap: the daily item stays put in the left list, and each overlapping
+// one-off branches off to the right with a single horizontal line (no
+// vertical/second-anchor segment needed — there's only one anchor).
+const ANCHOR_BRANCH_LENGTH = 40;
+const ANCHOR_BRANCH_SPACING = 32;
+
+function makeAnchorLi(item, branches) {
+  const li = document.createElement('li');
+  li.className = 'item prong-cluster';
+
+  const rows = document.createElement('div');
+  rows.className = 'cluster-rows';
+  const { row: anchorRow, times: anchorTimes } = makeClusterRow(item);
+  rows.appendChild(anchorRow);
+  li.appendChild(rows);
+
+  const branchEls = branches.map((preset) => {
+    const { row, times } = makeClusterRow(preset, { branch: true });
+    const hSeg = document.createElement('div');
+    hSeg.className = 'bracket-h';
+    const vSeg = document.createElement('div');
+    vSeg.className = 'bracket-v';
+    li.append(row, hSeg, vSeg);
+    return { row, times, hSeg, vSeg };
+  });
+
+  pendingClusters.push(() => {
+    const liRect = li.getBoundingClientRect();
+    const anchorRect = anchorTimes.getBoundingClientRect();
+    const anchorY = anchorRect.top + anchorRect.height / 2 - liRect.top;
+    const gap = 6;
+    const startX = anchorRect.right - liRect.left + gap;
+
+    branchEls.forEach(({ row, hSeg, vSeg }, i) => {
+      const targetY = anchorY + i * ANCHOR_BRANCH_SPACING;
+      const vLen = targetY - anchorY;
+
+      if (vLen > 0.5) {
+        vSeg.style.display = 'block';
+        vSeg.style.left = `${startX}px`;
+        vSeg.style.top = `${anchorY}px`;
+        vSeg.style.height = `${vLen}px`;
+      } else {
+        vSeg.style.display = 'none';
+      }
+
+      hSeg.style.left = `${startX}px`;
+      hSeg.style.top = `${targetY}px`;
+      hSeg.style.width = `${ANCHOR_BRANCH_LENGTH}px`;
+
+      row.style.left = `${startX + ANCHOR_BRANCH_LENGTH + gap}px`;
+      row.style.top = `${targetY}px`;
+    });
+  });
+
+  return li;
+}
+
 function makeDayBlock(dateStr, dayItems, isToday) {
   const isWeekStart = new Date(dateStr + 'T00:00:00').getDay() === 1; // Monday
   const dayDiv = document.createElement('div');
@@ -431,7 +525,13 @@ function makeDayBlock(dateStr, dayItems, isToday) {
   const ul = document.createElement('ul');
   ul.className = 'item-list';
   for (const laidOut of layoutDayItems(dayItems)) {
-    ul.appendChild(laidOut.mode === 'cluster' ? makeClusterLi(laidOut) : makeItemLi(laidOut));
+    if (laidOut.mode === 'cluster') {
+      ul.appendChild(makeClusterLi(laidOut));
+    } else if (laidOut.mode === 'anchor') {
+      ul.appendChild(makeAnchorLi(laidOut.item, laidOut.branches));
+    } else {
+      ul.appendChild(makeItemLi(laidOut));
+    }
   }
   dayDiv.appendChild(ul);
 
