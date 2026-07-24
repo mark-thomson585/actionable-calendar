@@ -295,61 +295,68 @@ function makeItemLi({ item, mode }) {
 // (pixel geometry isn't knowable before that).
 let pendingClusters = [];
 
-// Two or more mutually-overlapping ranges share one backwards-C bracket:
-// a horizontal tick from each item's time column, joined by a vertical
-// segment — all three segments the same length, per Mark's spec.
+function makeClusterRow(item, { branch } = {}) {
+  const row = document.createElement('div');
+  row.className = 'cluster-row' + (item.status === 'done' ? ' done' : '') + (branch ? ' cluster-branch-row' : '');
+  row.draggable = true;
+  row.dataset.id = item.id;
+  row.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', item.id));
+
+  const checkbox = makeCheckbox(item);
+
+  const title = makeEditableSpan({
+    displayText: item.text,
+    editValue: item.text,
+    inputType: 'text',
+    className: 'cluster-title',
+    deleteOnEmpty: true,
+    onCommit: (val) => (val === null ? deleteItem(item.id) : updateItem(item.id, { text: val })),
+  });
+
+  const times = document.createElement('span');
+  times.className = 'range-times';
+  times.append(
+    makeEditableSpan({
+      displayText: fmtTime(item.start_time),
+      editValue: item.start_time.slice(0, 5),
+      inputType: 'time',
+      className: 'range-time',
+      deleteOnEmpty: false,
+      onCommit: (val) => updateItem(item.id, { start_time: val }),
+    }),
+    makeEditableSpan({
+      displayText: fmtTime(item.end_time),
+      editValue: item.end_time.slice(0, 5),
+      inputType: 'time',
+      className: 'range-time',
+      deleteOnEmpty: false,
+      onCommit: (val) => updateItem(item.id, { end_time: val }),
+    }),
+  );
+
+  row.append(checkbox, title, times);
+  return { row, times };
+}
+
+// Two or more mutually-overlapping ranges share one backwards-C bracket: a
+// horizontal tick from the earliest and latest item's time column, joined by
+// a vertical segment — all three segments the same length. Any items
+// overlapping in between (not the earliest/latest) branch off the middle of
+// that vertical segment with their own equal-length horizontal segment,
+// their row sitting at the far end of it.
 function makeClusterLi({ members }) {
   const li = document.createElement('li');
   li.className = 'item prong-cluster';
 
+  const top = members[0];
+  const bottom = members[members.length - 1];
+  const branchItems = members.slice(1, -1);
+
   const rows = document.createElement('div');
   rows.className = 'cluster-rows';
-
-  const rowTimes = [];
-
-  for (const item of members) {
-    const row = document.createElement('div');
-    row.className = 'cluster-row' + (item.status === 'done' ? ' done' : '');
-    row.draggable = true;
-    row.dataset.id = item.id;
-    row.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', item.id));
-
-    const checkbox = makeCheckbox(item);
-
-    const title = makeEditableSpan({
-      displayText: item.text,
-      editValue: item.text,
-      inputType: 'text',
-      className: 'cluster-title',
-      deleteOnEmpty: true,
-      onCommit: (val) => (val === null ? deleteItem(item.id) : updateItem(item.id, { text: val })),
-    });
-
-    const times = document.createElement('span');
-    times.className = 'range-times';
-    times.append(
-      makeEditableSpan({
-        displayText: fmtTime(item.start_time),
-        editValue: item.start_time.slice(0, 5),
-        inputType: 'time',
-        className: 'range-time',
-        deleteOnEmpty: false,
-        onCommit: (val) => updateItem(item.id, { start_time: val }),
-      }),
-      makeEditableSpan({
-        displayText: fmtTime(item.end_time),
-        editValue: item.end_time.slice(0, 5),
-        inputType: 'time',
-        className: 'range-time',
-        deleteOnEmpty: false,
-        onCommit: (val) => updateItem(item.id, { end_time: val }),
-      }),
-    );
-
-    row.append(checkbox, title, times);
-    rows.appendChild(row);
-    rowTimes.push(times);
-  }
+  const { row: topRow, times: topTimes } = makeClusterRow(top);
+  const { row: bottomRow, times: bottomTimes } = makeClusterRow(bottom);
+  rows.append(topRow, bottomRow);
 
   const hTop = document.createElement('div');
   hTop.className = 'bracket-h';
@@ -360,15 +367,24 @@ function makeClusterLi({ members }) {
 
   li.append(rows, hTop, vMid, hBottom);
 
+  const branches = branchItems.map((item) => {
+    const { row, times } = makeClusterRow(item, { branch: true });
+    const segment = document.createElement('div');
+    segment.className = 'bracket-h';
+    li.append(row, segment);
+    return { row, times, segment };
+  });
+
   pendingClusters.push(() => {
     const liRect = li.getBoundingClientRect();
-    const firstRect = rowTimes[0].getBoundingClientRect();
-    const lastRect = rowTimes[rowTimes.length - 1].getBoundingClientRect();
+    const firstRect = topTimes.getBoundingClientRect();
+    const lastRect = bottomTimes.getBoundingClientRect();
     const centerTop = firstRect.top + firstRect.height / 2 - liRect.top;
     const centerBottom = lastRect.top + lastRect.height / 2 - liRect.top;
     const gap = 6;
     const startX = Math.max(firstRect.right, lastRect.right) - liRect.left + gap;
     const length = Math.max(0, centerBottom - centerTop);
+    const trunkX = startX + length;
 
     hTop.style.left = `${startX}px`;
     hTop.style.top = `${centerTop}px`;
@@ -378,9 +394,21 @@ function makeClusterLi({ members }) {
     hBottom.style.top = `${centerBottom}px`;
     hBottom.style.width = `${length}px`;
 
-    vMid.style.left = `${startX + length}px`;
+    vMid.style.left = `${trunkX}px`;
     vMid.style.top = `${centerTop}px`;
     vMid.style.height = `${length}px`;
+
+    branches.forEach(({ row, segment }, i) => {
+      const frac = (i + 1) / (branches.length + 1);
+      const branchY = centerTop + frac * length;
+
+      segment.style.left = `${trunkX}px`;
+      segment.style.top = `${branchY}px`;
+      segment.style.width = `${length}px`;
+
+      row.style.left = `${trunkX + length + gap}px`;
+      row.style.top = `${branchY}px`;
+    });
   });
 
   return li;

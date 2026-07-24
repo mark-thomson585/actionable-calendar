@@ -300,6 +300,13 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .bracket-h { height: 2px; }
 .bracket-v { width: 2px; }
 
+/* A middle-overlap item branching off the trunk, positioned in JS. */
+.cluster-branch-row {
+  position: absolute;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
 /* Click-to-edit affordance on text/time fields, and the inline <input>
    that replaces them while editing. */
 .text-title, .range-title, .prong-title,
