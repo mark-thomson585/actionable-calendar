@@ -73,8 +73,10 @@ function itemsByDate(items) {
 }
 
 // Decides how each timed item in a single day should render: 'point' (plain
-// line, just prefixed with a time), 'range' (two-line block), or 'prong'
-// (branch visual) when a range overlaps any other timed item that day.
+// line, just prefixed with a time), 'range' (two-line block), 'prong' (a
+// solo range overlapping only a point, own short branch), or 'cluster' (two
+// or more ranges that overlap each other — directly or transitively — share
+// one merged trunk line instead of each drawing its own separate branch).
 function layoutDayItems(dayItems) {
   const timed = dayItems.filter((i) => i.start_time);
   const untimed = dayItems.filter((i) => !i.start_time);
@@ -88,11 +90,56 @@ function layoutDayItems(dayItems) {
     return aStart < bEnd && bStart < aEnd;
   }
 
-  const laidOut = timed.map((item) => {
-    if (!item.end_time) return { item, mode: 'point' };
-    const intersects = timed.some((other) => other.id !== item.id && overlaps(item, other));
-    return { item, mode: intersects ? 'prong' : 'range' };
-  });
+  const ranges = timed.filter((i) => i.end_time);
+  const points = timed.filter((i) => !i.end_time);
+
+  // Union-find over ranges only — clusters form from range-to-range overlap.
+  const parent = new Map(ranges.map((r) => [r.id, r.id]));
+  function find(id) {
+    while (parent.get(id) !== id) {
+      parent.set(id, parent.get(parent.get(id)));
+      id = parent.get(id);
+    }
+    return id;
+  }
+  function union(a, b) {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent.set(ra, rb);
+  }
+  for (let i = 0; i < ranges.length; i++) {
+    for (let j = i + 1; j < ranges.length; j++) {
+      if (overlaps(ranges[i], ranges[j])) union(ranges[i].id, ranges[j].id);
+    }
+  }
+  const groups = new Map();
+  for (const r of ranges) {
+    const root = find(r.id);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(r);
+  }
+
+  const laidOut = [];
+  const clustered = new Set();
+
+  for (const members of groups.values()) {
+    if (members.length < 2) continue;
+    members.sort((a, b) => toMinutes(a.start_time) - toMinutes(b.start_time));
+    laidOut.push({ mode: 'cluster', members, sortKey: toMinutes(members[0].start_time) });
+    for (const m of members) clustered.add(m.id);
+  }
+
+  for (const r of ranges) {
+    if (clustered.has(r.id)) continue;
+    const intersects = timed.some((other) => other.id !== r.id && overlaps(r, other));
+    laidOut.push({ item: r, mode: intersects ? 'prong' : 'range', sortKey: toMinutes(r.start_time) });
+  }
+
+  for (const p of points) {
+    laidOut.push({ item: p, mode: 'point', sortKey: toMinutes(p.start_time) });
+  }
+
+  laidOut.sort((a, b) => a.sortKey - b.sortKey);
 
   for (const item of untimed) laidOut.push({ item, mode: 'plain' });
   return laidOut;
@@ -243,6 +290,68 @@ function makeItemLi({ item, mode }) {
   return li;
 }
 
+// Two or more mutually-overlapping ranges share one trunk line spanning the
+// full cluster instead of each drawing its own separate branch.
+function makeClusterLi({ members }) {
+  const li = document.createElement('li');
+  li.className = 'item prong-cluster';
+
+  const rows = document.createElement('div');
+  rows.className = 'cluster-rows';
+
+  for (const item of members) {
+    const row = document.createElement('div');
+    row.className = 'cluster-row' + (item.status === 'done' ? ' done' : '');
+    row.draggable = true;
+    row.dataset.id = item.id;
+    row.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', item.id));
+
+    const checkbox = makeCheckbox(item);
+
+    const title = makeEditableSpan({
+      displayText: item.text,
+      editValue: item.text,
+      inputType: 'text',
+      className: 'cluster-title',
+      deleteOnEmpty: true,
+      onCommit: (val) => (val === null ? deleteItem(item.id) : updateItem(item.id, { text: val })),
+    });
+
+    const tick = document.createElement('span');
+    tick.className = 'cluster-tick';
+
+    const times = document.createElement('span');
+    times.className = 'range-times';
+    times.append(
+      makeEditableSpan({
+        displayText: fmtTime(item.start_time),
+        editValue: item.start_time.slice(0, 5),
+        inputType: 'time',
+        className: 'range-time',
+        deleteOnEmpty: false,
+        onCommit: (val) => updateItem(item.id, { start_time: val }),
+      }),
+      makeEditableSpan({
+        displayText: fmtTime(item.end_time),
+        editValue: item.end_time.slice(0, 5),
+        inputType: 'time',
+        className: 'range-time',
+        deleteOnEmpty: false,
+        onCommit: (val) => updateItem(item.id, { end_time: val }),
+      }),
+    );
+
+    row.append(checkbox, title, tick, times);
+    rows.appendChild(row);
+  }
+
+  const trunk = document.createElement('div');
+  trunk.className = 'cluster-trunk';
+
+  li.append(rows, trunk);
+  return li;
+}
+
 function makeDayBlock(dateStr, dayItems, isToday) {
   const isWeekStart = new Date(dateStr + 'T00:00:00').getDay() === 1; // Monday
   const dayDiv = document.createElement('div');
@@ -259,7 +368,9 @@ function makeDayBlock(dateStr, dayItems, isToday) {
 
   const ul = document.createElement('ul');
   ul.className = 'item-list';
-  for (const laidOut of layoutDayItems(dayItems)) ul.appendChild(makeItemLi(laidOut));
+  for (const laidOut of layoutDayItems(dayItems)) {
+    ul.appendChild(laidOut.mode === 'cluster' ? makeClusterLi(laidOut) : makeItemLi(laidOut));
+  }
   dayDiv.appendChild(ul);
 
   dayDiv.addEventListener('dragover', (e) => {
