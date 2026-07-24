@@ -214,26 +214,10 @@ function makeItemLi({ item, mode }) {
   } else if (mode === 'range') {
     const block = document.createElement('div');
     block.className = 'range-block';
-
-    const fromWord = document.createElement('span');
-    fromWord.className = 'connector-word';
-    fromWord.textContent = ' from';
-    const line1 = document.createElement('div');
-    line1.className = 'range-line';
-    line1.append(titleSpan(), fromWord);
-
-    const toWord = document.createElement('span');
-    toWord.className = 'connector-word';
-    toWord.textContent = ' to';
-    const line2 = document.createElement('div');
-    line2.className = 'range-line range-sub';
-    line2.append(timeSpan('start_time', 'range-time'), toWord);
-
-    const line3 = document.createElement('div');
-    line3.className = 'range-line range-sub';
-    line3.append(timeSpan('end_time', 'range-time'));
-
-    block.append(line1, line2, line3);
+    const times = document.createElement('span');
+    times.className = 'range-times';
+    times.append(timeSpan('start_time', 'range-time'), timeSpan('end_time', 'range-time'));
+    block.append(titleSpan(), times);
     li.append(checkbox, block);
   } else if (mode === 'prong') {
     const block = document.createElement('div');

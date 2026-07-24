@@ -183,22 +183,31 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 .empty { color: var(--muted); font-size: 13px; padding: 4px; }
 
-/* Non-intersecting time range: reads like a sentence broken across three
-   lines — "Title from" / "start_time to" / "end_time" — all left-aligned. */
+/* Non-intersecting time range: title on the left, vertically centered
+   against a two-line start/end time stack on the right. */
 .range-block {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
   padding: 4px 0;
 }
 
-.range-line { line-height: 1.35; }
-
-.range-line.range-sub {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 2px;
+.range-times {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  flex: 0 0 auto;
 }
 
-.range-time { font-variant-numeric: tabular-nums; }
+.range-time {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
 
 .range-title { font-weight: 400; color: var(--fg); }
 
