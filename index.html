@@ -12,12 +12,17 @@
     <span id="status">connecting…</span>
   </header>
 
-  <section id="goals">
-    <h2>Goals</h2>
-    <ul id="goals-list" class="item-list"></ul>
-  </section>
-
-  <section id="days"></section>
+  <main class="layout">
+    <section id="day-column">
+      <div id="top-sentinel"></div>
+      <div id="days"></div>
+      <div id="bottom-sentinel"></div>
+    </section>
+    <aside id="month-column">
+      <h2>This Month</h2>
+      <ul id="month-list" class="item-list"></ul>
+    </aside>
+  </main>
 
   <script type="module" src="app.js"></script>
 </body>

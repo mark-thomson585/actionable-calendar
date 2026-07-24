@@ -14,44 +14,88 @@
 
 * { box-sizing: border-box; }
 
+html, body { height: 100%; margin: 0; }
+
 body {
   font-family: var(--font-sans);
   background: var(--bg);
   color: var(--fg);
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 24px 16px 80px;
+  display: flex;
+  flex-direction: column;
+  padding: 0 32px;
 }
 
 header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 24px;
+  padding: 20px 0 16px;
+  flex: 0 0 auto;
 }
 
 h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 #status { font-size: 12px; color: var(--muted); }
 
-section#goals {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 16px;
-  margin-bottom: 28px;
+.layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 40px;
 }
 
-section#goals h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 8px; }
+#day-column {
+  position: relative;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 0 8px 40px 0;
+}
+
+#month-column {
+  overflow-y: auto;
+  min-height: 0;
+  border-left: 1px solid var(--border);
+  padding: 0 0 40px 28px;
+}
+
+#month-column h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 4px 0 12px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+}
+
+#top-sentinel, #bottom-sentinel { height: 1px; }
+
+.month-row {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.month-row .month-date { color: var(--muted); flex: 0 0 auto; white-space: nowrap; }
+.month-row .month-title { flex: 1; }
+.empty-month { color: var(--muted); font-size: 13px; }
 
 .day {
   margin-bottom: 22px;
   border-radius: 10px;
   transition: background 0.15s ease;
+  scroll-margin-top: 0;
 }
+
+.day.today .day-heading { color: var(--accent); }
 
 .day.drag-over { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 
-.day h3 {
+.day h3.day-heading {
   font-size: 15px;
   font-weight: 700;
   color: var(--accent-emphasized);
@@ -59,6 +103,9 @@ section#goals h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0
   padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
 }
+
+.day.empty-day .item-list { display: none; }
+.day.empty-day h3.day-heading { opacity: 0.5; font-weight: 500; }
 
 .item-list { list-style: none; margin: 0; padding: 0; }
 
@@ -73,11 +120,52 @@ section#goals h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0
 
 .item:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
 
-.item input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); }
+/* Custom checkbox: native controls can't have their unchecked background
+   styled reliably across browsers, so we draw our own. */
+.item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  flex: 0 0 auto;
+  border: 1.5px solid var(--muted);
+  border-radius: 4px;
+  background: var(--bg);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+.item input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.item input[type="checkbox"]:checked::after {
+  content: '';
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
 
 .item .text { flex: 1; line-height: 1.35; }
 
-.item.done .text { color: var(--done); text-decoration: line-through; }
+.item .time-prefix {
+  color: var(--muted);
+  font-size: 12px;
+  margin-right: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.item.done .text,
+.item.done .range-title,
+.item.done .prong-title {
+  color: var(--done);
+  text-decoration: line-through;
+}
 
 .item .tag {
   font-size: 10px;
@@ -90,3 +178,72 @@ section#goals h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0
 }
 
 .empty { color: var(--muted); font-size: 13px; padding: 4px; }
+
+/* Non-intersecting time range: two lines with the title centered between. */
+.range-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 4px 0;
+}
+
+.range-time {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.range-title { font-weight: 600; margin: 2px 0; }
+
+/* Intersecting time range: vertical line on the right with a branch for the title. */
+.prong-block {
+  flex: 1;
+  position: relative;
+  min-height: 42px;
+  padding: 2px 34px 2px 4px;
+}
+
+.prong-line {
+  position: absolute;
+  right: 14px;
+  top: 7px;
+  bottom: 7px;
+  width: 2px;
+  background: var(--accent);
+}
+
+.prong-time {
+  position: absolute;
+  right: 0;
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.prong-time.top { top: 0; }
+.prong-time.bottom { bottom: 0; }
+
+.prong-branch {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+}
+
+.prong-branch::before {
+  content: '';
+  width: 10px;
+  height: 2px;
+  background: var(--accent);
+}
+
+.prong-title {
+  margin-right: 8px;
+  font-weight: 600;
+  text-align: right;
+}
