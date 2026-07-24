@@ -5,6 +5,7 @@ create table if not exists items (
   date date,
   status text not null default 'open' check (status in ('open','done')),
   repeat_rule text,
+  no_rollover boolean not null default false,
   start_time time,
   end_time time,
   created_at timestamptz not null default now(),
