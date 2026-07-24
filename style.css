@@ -93,6 +93,9 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 .day.today h3.day-heading { color: var(--accent); font-weight: 900; opacity: 1; }
 
+/* Today's whole schedule renders 1.2x larger than every other day. */
+.day.today { zoom: 1.2; }
+
 .day.week-start {
   border-top: 3px solid rgba(31, 31, 30, 0.45);
   padding-top: 14px;
@@ -184,23 +187,32 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 .empty { color: var(--muted); font-size: 13px; padding: 4px; }
 
-/* Non-intersecting time range: two lines with the title centered between. */
+/* Non-intersecting time range: start/end stacked at left, title centered
+   vertically to the right — no divider between them. */
 .range-block {
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
+  gap: 14px;
   padding: 4px 0;
 }
 
-.range-time {
-  font-size: 11px;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
+.range-times {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  flex: 0 0 auto;
 }
 
-.range-title { font-weight: 600; margin: 2px 0; }
+.range-time {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.range-title { font-size: 12px; font-weight: 400; color: var(--fg); }
 
 /* Intersecting time range: vertical line on the right with a branch for the title. */
 .prong-block {
@@ -252,3 +264,28 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
   font-weight: 600;
   text-align: right;
 }
+
+/* Click-to-edit affordance on text/time fields, and the inline <input>
+   that replaces them while editing. */
+.text-title, .range-title, .prong-title,
+.time-prefix, .range-time, .prong-time {
+  cursor: text;
+  border-radius: 3px;
+}
+
+.text-title:hover, .range-title:hover, .prong-title:hover,
+.time-prefix:hover, .range-time:hover, .prong-time:hover {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.inline-edit-input {
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+input.inline-edit-input[type="text"] { width: 14em; }
+input.inline-edit-input[type="time"] { width: 6.5em; }
