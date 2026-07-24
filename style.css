@@ -252,60 +252,6 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 .prong-title { font-weight: 600; flex: 0 1 auto; }
 
-/* Two or more mutually-overlapping ranges: one shared trunk line spans the
-   whole cluster's height instead of each item drawing its own branch. */
-.prong-cluster {
-  display: block;
-  position: relative;
-  padding: 0;
-  cursor: default;
-}
-
-.cluster-rows { display: flex; flex-direction: column; }
-
-.cluster-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 4px;
-  border-radius: 6px;
-  cursor: grab;
-}
-
-.cluster-row:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
-
-.cluster-row.done .cluster-title {
-  color: var(--done);
-  text-decoration: line-through;
-}
-
-.cluster-title {
-  font-weight: 600;
-  cursor: text;
-  border-radius: 3px;
-}
-
-.cluster-title:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
-
-.cluster-tick {
-  flex: 1 1 auto;
-  min-width: 12px;
-  height: 2px;
-  margin: 0 8px;
-  background: var(--accent);
-}
-
-.cluster-row .range-times { flex: 0 0 68px; text-align: right; }
-
-.cluster-trunk {
-  position: absolute;
-  right: 72px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--accent);
-}
-
 /* Click-to-edit affordance on text/time fields, and the inline <input>
    that replaces them while editing. */
 .text-title, .range-title, .prong-title,
