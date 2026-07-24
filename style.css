@@ -183,14 +183,14 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 .empty { color: var(--muted); font-size: 13px; padding: 4px; }
 
-/* Non-intersecting time range: title on the left, vertically centered
-   against a two-line start/end time stack on the right. */
+/* Non-intersecting time range: one left-aligned phrase — "task text from"
+   immediately followed by the two-line start/end time stack. */
 .range-block {
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  justify-content: flex-start;
+  gap: 8px;
   padding: 4px 0;
 }
 

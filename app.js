@@ -41,7 +41,7 @@ function fmtDay(dateStr) {
 function fmtTime(t) {
   // t is "HH:MM:SS" or "HH:MM"
   const [h, m] = t.split(':').map(Number);
-  const period = h >= 12 ? 'PM' : 'AM';
+  const period = h >= 12 ? 'pm' : 'am';
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12}:${String(m).padStart(2, '0')} ${period}`;
 }
