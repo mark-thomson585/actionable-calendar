@@ -169,8 +169,12 @@ function makeItemLi({ item, mode }) {
 }
 
 function makeDayBlock(dateStr, dayItems, isToday) {
+  const isWeekStart = new Date(dateStr + 'T00:00:00').getDay() === 1; // Monday
   const dayDiv = document.createElement('div');
-  dayDiv.className = 'day' + (isToday ? ' today' : '') + (dayItems.length === 0 ? ' empty-day' : '');
+  dayDiv.className = 'day'
+    + (isToday ? ' today' : '')
+    + (dayItems.length === 0 ? ' empty-day' : '')
+    + (isWeekStart ? ' week-start' : '');
   dayDiv.dataset.date = dateStr;
 
   const h3 = document.createElement('h3');

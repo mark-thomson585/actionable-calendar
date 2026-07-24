@@ -91,7 +91,12 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
   scroll-margin-top: 0;
 }
 
-.day.today .day-heading { color: var(--accent); }
+.day.today h3.day-heading { color: var(--accent); font-weight: 900; opacity: 1; }
+
+.day.week-start {
+  border-top: 3px solid rgba(31, 31, 30, 0.45);
+  padding-top: 14px;
+}
 
 .day.drag-over { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 
@@ -105,7 +110,7 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 }
 
 .day.empty-day .item-list { display: none; }
-.day.empty-day h3.day-heading { opacity: 0.5; font-weight: 500; }
+.day.empty-day:not(.today) h3.day-heading { opacity: 0.5; font-weight: 500; }
 
 .item-list { list-style: none; margin: 0; padding: 0; }
 
