@@ -215,23 +215,20 @@ function makeItemLi({ item, mode }) {
     const block = document.createElement('div');
     block.className = 'range-block';
 
-    const title = document.createElement('span');
-    title.className = 'range-title-wrap';
-    const fromWord = document.createElement('span');
-    fromWord.className = 'connector-word';
-    fromWord.textContent = ' from';
-    title.append(titleSpan(), fromWord);
-
     const times = document.createElement('span');
     times.className = 'range-times';
-    const startLine = document.createElement('span');
+
+    const fromWord = document.createElement('span');
+    fromWord.className = 'connector-word';
+    fromWord.textContent = 'from ';
     const toWord = document.createElement('span');
     toWord.className = 'connector-word';
     toWord.textContent = ' to';
-    startLine.append(timeSpan('start_time', 'range-time'), toWord);
+    const startLine = document.createElement('span');
+    startLine.append(fromWord, timeSpan('start_time', 'range-time'), toWord);
     times.append(startLine, timeSpan('end_time', 'range-time'));
 
-    block.append(title, times);
+    block.append(titleSpan(), times);
     li.append(checkbox, block);
   } else if (mode === 'prong') {
     const block = document.createElement('div');
