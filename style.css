@@ -250,7 +250,55 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .prong-time.top { top: 0; }
 .prong-time.bottom { bottom: 0; }
 
-.prong-title { font-weight: 600; flex: 0 1 auto; }
+.prong-title { font-weight: 400; color: var(--fg); flex: 0 1 auto; }
+
+/* Two or more mutually-overlapping ranges: no per-item branch. Instead a
+   backwards-C bracket (two equal-length horizontal ticks + one equal-length
+   vertical segment) connects the vertical center of each item's time
+   column, positioned in JS once actual pixel geometry is known. */
+.prong-cluster {
+  display: block;
+  position: relative;
+  padding: 0;
+  cursor: default;
+}
+
+.cluster-rows { display: flex; flex-direction: column; }
+
+.cluster-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  border-radius: 6px;
+  cursor: grab;
+}
+
+.cluster-row:hover { background: color-mix(in srgb, var(--fg) 5%, transparent); }
+
+.cluster-row.done .cluster-title {
+  color: var(--done);
+  text-decoration: line-through;
+}
+
+.cluster-title {
+  font-weight: 400;
+  color: var(--fg);
+  cursor: text;
+  border-radius: 3px;
+}
+
+.cluster-title:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+
+.cluster-row .range-times { flex: 0 0 auto; }
+
+.bracket-h, .bracket-v {
+  position: absolute;
+  background: var(--accent);
+}
+
+.bracket-h { height: 2px; }
+.bracket-v { width: 2px; }
 
 /* Click-to-edit affordance on text/time fields, and the inline <input>
    that replaces them while editing. */
