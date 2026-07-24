@@ -155,21 +155,12 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
   transform: rotate(45deg) translate(-1px, -1px);
 }
 
-.item .text {
-  flex: 1;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  line-height: 1.35;
-}
+.item .text { flex: 1; line-height: 1.35; }
 
-.item .title-wrap { min-width: 0; }
+.item .connector-word { color: var(--muted); }
 
 .item .time-suffix {
   color: var(--muted);
-  font-size: 12px;
-  flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
 }
 
@@ -192,31 +183,22 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 .empty { color: var(--muted); font-size: 13px; padding: 4px; }
 
-/* Non-intersecting time range: title on the left (lined up with every
-   other item), start/end stacked at the right — no divider between them. */
+/* Non-intersecting time range: reads like a sentence broken across three
+   lines — "Title from" / "start_time to" / "end_time" — all left-aligned. */
 .range-block {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
   padding: 4px 0;
 }
 
-.range-times {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  flex: 0 0 auto;
-}
+.range-line { line-height: 1.35; }
 
-.range-time {
+.range-line.range-sub {
   font-size: 12px;
   color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
+  margin-top: 2px;
 }
+
+.range-time { font-variant-numeric: tabular-nums; }
 
 .range-title { font-weight: 400; color: var(--fg); }
 
