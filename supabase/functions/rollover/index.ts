@@ -6,8 +6,16 @@ function nextOccurrence(dateStr: string, repeatRule: string | null): Date {
     case "weekly":
       next.setUTCDate(next.getUTCDate() + 7);
       break;
+    case "biweekly":
+      next.setUTCDate(next.getUTCDate() + 14);
+      break;
     case "monthly":
       next.setUTCMonth(next.getUTCMonth() + 1);
+      break;
+    case "monthly-first-saturday":
+      // Jump to the 1st of next month, then advance to the first Saturday.
+      next.setUTCMonth(next.getUTCMonth() + 1, 1);
+      while (next.getUTCDay() !== 6) next.setUTCDate(next.getUTCDate() + 1);
       break;
     case "weekday":
       // Advance a day at a time, skipping Saturday (6) and Sunday (0).

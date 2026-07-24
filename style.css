@@ -209,7 +209,7 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
   line-height: 1.2;
 }
 
-.range-title { font-size: 12px; font-weight: 400; color: var(--fg); }
+.range-title { font-weight: 400; color: var(--fg); }
 
 /* Intersecting time range: vertical line on the right with a branch for the title. */
 .prong-block {
