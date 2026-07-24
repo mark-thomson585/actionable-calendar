@@ -116,7 +116,7 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 .item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   padding: 5px 4px;
   border-radius: 6px;
@@ -132,7 +132,6 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  margin-top: 3px;
   flex: 0 0 auto;
   border: 1.5px solid var(--muted);
   border-radius: 4px;
