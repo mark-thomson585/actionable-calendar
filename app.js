@@ -201,12 +201,15 @@ function makeItemLi({ item, mode }) {
   if (mode === 'plain' || mode === 'point') {
     const text = document.createElement('span');
     text.className = 'text';
-    if (mode === 'point') {
-      text.appendChild(timeSpan('start_time', 'time-prefix'));
-    }
-    text.appendChild(titleSpan());
+    const titleWrap = document.createElement('span');
+    titleWrap.className = 'title-wrap';
+    titleWrap.appendChild(titleSpan());
     const tag = makeRepeatTag(item);
-    if (tag) text.appendChild(tag);
+    if (tag) titleWrap.appendChild(tag);
+    text.appendChild(titleWrap);
+    if (mode === 'point') {
+      text.appendChild(timeSpan('start_time', 'time-suffix'));
+    }
     li.append(checkbox, text);
   } else if (mode === 'range') {
     const block = document.createElement('div');
@@ -214,19 +217,18 @@ function makeItemLi({ item, mode }) {
     const times = document.createElement('span');
     times.className = 'range-times';
     times.append(timeSpan('start_time', 'range-time'), timeSpan('end_time', 'range-time'));
-    block.append(times, titleSpan());
+    block.append(titleSpan(), times);
     li.append(checkbox, block);
   } else if (mode === 'prong') {
     const block = document.createElement('div');
     block.className = 'prong-block';
+    const connector = document.createElement('span');
+    connector.className = 'prong-connector';
     const line = document.createElement('div');
     line.className = 'prong-line';
-    const branch = document.createElement('div');
-    branch.className = 'prong-branch';
-    branch.appendChild(titleSpan());
     const topTime = timeSpan('start_time', 'prong-time top');
     const bottomTime = timeSpan('end_time', 'prong-time bottom');
-    block.append(topTime, bottomTime, line, branch);
+    block.append(titleSpan(), connector, line, topTime, bottomTime);
     li.append(checkbox, block);
   }
 

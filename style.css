@@ -156,12 +156,21 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
   transform: rotate(45deg) translate(-1px, -1px);
 }
 
-.item .text { flex: 1; line-height: 1.35; }
+.item .text {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  line-height: 1.35;
+}
 
-.item .time-prefix {
+.item .title-wrap { min-width: 0; }
+
+.item .time-suffix {
   color: var(--muted);
   font-size: 12px;
-  margin-right: 6px;
+  flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
 }
 
@@ -184,12 +193,13 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 .empty { color: var(--muted); font-size: 13px; padding: 4px; }
 
-/* Non-intersecting time range: start/end stacked at left, title centered
-   vertically to the right — no divider between them. */
+/* Non-intersecting time range: title on the left (lined up with every
+   other item), start/end stacked at the right — no divider between them. */
 .range-block {
   flex: 1;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 14px;
   padding: 4px 0;
 }
@@ -211,12 +221,23 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 .range-title { font-weight: 400; color: var(--fg); }
 
-/* Intersecting time range: vertical line on the right with a branch for the title. */
+/* Intersecting time range: title on the left, a connecting line running to
+   a vertical bracket with start/end times at the far right. */
 .prong-block {
   flex: 1;
+  display: flex;
+  align-items: center;
   position: relative;
   min-height: 42px;
-  padding: 2px 34px 2px 4px;
+  padding-right: 34px;
+}
+
+.prong-connector {
+  flex: 1;
+  height: 2px;
+  min-width: 12px;
+  margin: 0 8px;
+  background: var(--accent);
 }
 
 .prong-line {
@@ -239,39 +260,18 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 .prong-time.top { top: 0; }
 .prong-time.bottom { bottom: 0; }
 
-.prong-branch {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  flex-direction: row-reverse;
-}
-
-.prong-branch::before {
-  content: '';
-  width: 10px;
-  height: 2px;
-  background: var(--accent);
-}
-
-.prong-title {
-  margin-right: 8px;
-  font-weight: 600;
-  text-align: right;
-}
+.prong-title { font-weight: 600; flex: 0 1 auto; }
 
 /* Click-to-edit affordance on text/time fields, and the inline <input>
    that replaces them while editing. */
 .text-title, .range-title, .prong-title,
-.time-prefix, .range-time, .prong-time {
+.time-suffix, .range-time, .prong-time {
   cursor: text;
   border-radius: 3px;
 }
 
 .text-title:hover, .range-title:hover, .prong-title:hover,
-.time-prefix:hover, .range-time:hover, .prong-time:hover {
+.time-suffix:hover, .range-time:hover, .prong-time:hover {
   background: color-mix(in srgb, var(--accent) 15%, transparent);
 }
 

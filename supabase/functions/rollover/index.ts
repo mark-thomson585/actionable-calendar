@@ -1,5 +1,19 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+// Mark lives in NYC — "today" must follow America/New_York's calendar date,
+// not the UTC date the server happens to be running on (otherwise anything
+// still "today" locally in the evening looks overdue hours early).
+const NY_TZ = "America/New_York";
+
+function nyToday(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: NY_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 function nextOccurrence(dateStr: string, repeatRule: string | null): Date {
   const next = new Date(dateStr + "T00:00:00Z");
   switch (repeatRule) {
@@ -41,7 +55,7 @@ Deno.serve(async (_req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = nyToday();
   const todayDate = new Date(today + "T00:00:00Z");
 
   // Roll forward any open, rollover-eligible item whose date has passed.
