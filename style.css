@@ -53,10 +53,27 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 }
 
 #month-column {
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   border-left: 1px solid var(--border);
-  padding: 0 0 40px 28px;
+  padding: 0 0 0 28px;
+}
+
+/* This Month (top half) and Docket (bottom half) split the vertical lane
+   evenly, each scrolling independently. */
+#month-section, #docket-section {
+  flex: 1 1 50%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-bottom: 16px;
+}
+
+#docket-section {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
 }
 
 #month-column h2 {
@@ -68,6 +85,7 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
   position: sticky;
   top: 0;
   background: var(--bg);
+  flex: 0 0 auto;
 }
 
 #top-sentinel, #bottom-sentinel { height: 1px; }

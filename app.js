@@ -11,6 +11,7 @@ const daysEl = document.getElementById('days');
 const topSentinel = document.getElementById('top-sentinel');
 const bottomSentinel = document.getElementById('bottom-sentinel');
 const monthList = document.getElementById('month-list');
+const docketList = document.getElementById('docket-list');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const INITIAL_PAST_DAYS = 60;
@@ -599,6 +600,47 @@ function renderMonthColumn() {
   }
 }
 
+// Docket: undated quick-capture items. Checking one off deletes it instead
+// of marking it done — there's no "done" state here, just cleared.
+function makeDocketRow(item) {
+  const li = document.createElement('li');
+  li.className = 'item';
+
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.addEventListener('change', () => {
+    if (checkbox.checked) deleteItem(item.id);
+  });
+
+  const text = makeEditableSpan({
+    displayText: item.text,
+    editValue: item.text,
+    inputType: 'text',
+    className: 'text-title',
+    deleteOnEmpty: true,
+    onCommit: (val) => (val === null ? deleteItem(item.id) : updateItem(item.id, { text: val })),
+  });
+
+  const wrap = document.createElement('span');
+  wrap.className = 'text';
+  wrap.appendChild(text);
+
+  li.append(checkbox, wrap);
+  return li;
+}
+
+function renderDocketColumn() {
+  const docketItems = allItems.filter((i) => !i.date);
+
+  docketList.innerHTML = '';
+  if (docketItems.length === 0) {
+    docketList.innerHTML = '<li class="empty-month">Nothing in the docket.</li>';
+    return;
+  }
+
+  for (const item of docketItems) docketList.appendChild(makeDocketRow(item));
+}
+
 function scrollToToday() {
   const todayEl = daysEl.querySelector('.day.today');
   if (todayEl) todayEl.scrollIntoView({ block: 'start' });
@@ -611,6 +653,7 @@ function renderAll() {
   }
   renderDayColumn();
   renderMonthColumn();
+  renderDocketColumn();
   if (!initialRenderDone) {
     scrollToToday();
     initialRenderDone = true;
