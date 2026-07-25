@@ -72,6 +72,37 @@ h1 { font-size: 20px; margin: 0; color: var(--accent); }
 
 #top-sentinel, #bottom-sentinel { height: 1px; }
 
+/* Mobile: day view and month view become two full-width swipeable pages
+   instead of side-by-side columns. Starts on the day view; swipe/drag
+   right to reveal the month view. */
+@media (max-width: 700px) {
+  body { padding: 0 16px; }
+
+  header { padding: 14px 0 10px; }
+
+  .layout {
+    display: flex;
+    grid-template-columns: none;
+    gap: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #day-column, #month-column {
+    flex: 0 0 100%;
+    max-width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  #month-column {
+    border-left: none;
+    padding: 0 0 40px 0;
+  }
+}
+
 .month-row {
   display: flex;
   gap: 10px;
