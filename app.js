@@ -74,13 +74,14 @@ function itemsByDate(items) {
 }
 
 // Decides how each timed item in a single day should render: 'point' (plain
-// line, just prefixed with a time), 'range' (two-line block), 'prong' (a
-// solo range overlapping only a point, own short branch), 'cluster' (two or
-// more one-off ranges that overlap each other — directly or transitively —
-// share one backwards-C bracket), or 'anchor' (a daily weekday-routine item
-// that a one-off item's time genuinely overlaps — the one-off branches off
-// to the right instead of crowding the left list; daily items always stay
-// on the left regardless).
+// line, just prefixed with a time), 'range' (two-line block — a range
+// overlapping only a point, not another range, still renders this way; a
+// timestamp landing inside a range isn't treated as a real conflict),
+// 'cluster' (two or more one-off ranges that overlap each other — directly
+// or transitively — share one backwards-C bracket), or 'anchor' (a daily
+// weekday-routine item that a one-off item's time genuinely overlaps — the
+// one-off branches off to the right instead of crowding the left list;
+// daily items always stay on the left regardless).
 function layoutDayItems(dayItems) {
   const timed = dayItems.filter((i) => i.start_time);
   const untimed = dayItems.filter((i) => !i.start_time);
@@ -153,8 +154,7 @@ function layoutDayItems(dayItems) {
 
   for (const r of ranges) {
     if (clustered.has(r.id)) continue;
-    const intersects = freePresets.some((other) => other.id !== r.id && overlaps(r, other));
-    laidOut.push({ item: r, mode: intersects ? 'prong' : 'range', sortKey: toMinutes(r.start_time) });
+    laidOut.push({ item: r, mode: 'range', sortKey: toMinutes(r.start_time) });
   }
 
   for (const p of points) {
@@ -263,7 +263,7 @@ function makeItemLi({ item, mode }) {
     displayText: item.text,
     editValue: item.text,
     inputType: 'text',
-    className: mode === 'range' ? 'range-title' : mode === 'prong' ? 'prong-title' : 'text-title',
+    className: mode === 'range' ? 'range-title' : 'text-title',
     deleteOnEmpty: true,
     onCommit: (val) => (val === null ? deleteItem(item.id) : updateItem(item.id, { text: val })),
   });
@@ -305,17 +305,6 @@ function makeItemLi({ item, mode }) {
     times.append(timeSpan('start_time', 'range-time'), timeSpan('end_time', 'range-time'));
 
     block.append(title, times);
-    li.append(checkbox, block);
-  } else if (mode === 'prong') {
-    const block = document.createElement('div');
-    block.className = 'prong-block';
-    const connector = document.createElement('span');
-    connector.className = 'prong-connector';
-    const line = document.createElement('div');
-    line.className = 'prong-line';
-    const topTime = timeSpan('start_time', 'prong-time top');
-    const bottomTime = timeSpan('end_time', 'prong-time bottom');
-    block.append(titleSpan(), connector, line, topTime, bottomTime);
     li.append(checkbox, block);
   }
 
