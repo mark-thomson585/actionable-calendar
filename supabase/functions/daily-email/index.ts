@@ -62,14 +62,40 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
-const SHUFFLED_WORDS = seededShuffle(WORDS, 20260101);
+// The five specialty categories each get their own dedicated 3-item daily
+// section, separate from the general "Words of the Day" 5-word pick — so
+// the general pool excludes them entirely to avoid overlap.
+const SPECIALTY_CATEGORY_LABELS: [string, string][] = [
+  ["data-science", "Data Science Concepts"],
+  ["computer-science", "Computer Science Concepts"],
+  ["finance", "Finance Concepts"],
+  ["healthcare", "Healthcare Concepts"],
+  ["pharma", "Pharmaceuticals"],
+];
+const SPECIALTY_CATEGORIES = new Set(SPECIALTY_CATEGORY_LABELS.map(([c]) => c));
+
+const GENERAL_WORDS = seededShuffle(WORDS.filter((w) => !SPECIALTY_CATEGORIES.has(w.category)), 20260101);
+
+const SPECIALTY_POOLS = new Map(
+  SPECIALTY_CATEGORY_LABELS.map(([cat, label]) => [
+    cat,
+    { label, words: seededShuffle(WORDS.filter((w) => w.category === cat), 20260103) },
+  ]),
+);
+
+function pickN<T>(pool: T[], start: number, count: number): T[] {
+  const picks = [];
+  for (let i = 0; i < count; i++) picks.push(pool[(start + i) % pool.length]);
+  return picks;
+}
 
 function pickWordsForDay(doy: number) {
-  const n = SHUFFLED_WORDS.length;
-  const start = (doy * 5) % n;
-  const picks = [];
-  for (let i = 0; i < 5; i++) picks.push(SHUFFLED_WORDS[(start + i) % n]);
-  return { featured: picks[0], bonus: picks.slice(1) };
+  const generalPicks = pickN(GENERAL_WORDS, (doy * 5) % GENERAL_WORDS.length, 5);
+  const specialty = SPECIALTY_CATEGORY_LABELS.map(([cat, label]) => {
+    const pool = SPECIALTY_POOLS.get(cat)!.words;
+    return { label, words: pickN(pool, (doy * 3) % pool.length, 3) };
+  });
+  return { featured: generalPicks[0], bonus: generalPicks.slice(1), specialty };
 }
 
 function itemLine(item: { text: string; start_time: string | null; end_time: string | null }): string {
@@ -153,7 +179,15 @@ Deno.serve(async (req) => {
     })
     .join("");
 
-  const { featured, bonus } = pickWordsForDay(dayOfYear(now));
+  const { featured, bonus, specialty } = pickWordsForDay(dayOfYear(now));
+
+  const specialtySections = specialty
+    .map(
+      ({ label, words }) => `
+    <h2 style="font-size:15px;text-transform:uppercase;letter-spacing:0.04em;color:#6b6a65;margin-top:24px;">${label}</h2>
+    ${words.map((w) => wordBlock(w, false)).join("")}`,
+    )
+    .join("");
 
   const headerDate = weekdayFmt.format(now);
 
@@ -179,6 +213,7 @@ Deno.serve(async (req) => {
     <h2 style="font-size:15px;text-transform:uppercase;letter-spacing:0.04em;color:#6b6a65;margin-top:24px;">Words of the Day</h2>
     ${wordBlock(featured, true)}
     ${bonus.map((w) => wordBlock(w, false)).join("")}
+    ${specialtySections}
   </div>
 </body>
 </html>`;
