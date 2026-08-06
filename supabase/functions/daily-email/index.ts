@@ -157,8 +157,15 @@ Deno.serve(async (req) => {
 
   const headerDate = weekdayFmt.format(now);
 
-  const html = `
-  <div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:600px;margin:0 auto;color:#121212;">
+  const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+</head>
+<body style="background-color:#f8f8f6;margin:0;padding:24px;">
+  <div style="background-color:#f8f8f6;font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:600px;margin:0 auto;color:#121212;">
     <h1 style="color:#3a8f11;font-size:22px;">Daily Docket for ${headerDate} \u{1F9A6}</h1>
 
     <h2 style="font-size:15px;text-transform:uppercase;letter-spacing:0.04em;color:#6b6a65;margin-top:24px;">Docket:</h2>
@@ -172,7 +179,13 @@ Deno.serve(async (req) => {
     <h2 style="font-size:15px;text-transform:uppercase;letter-spacing:0.04em;color:#6b6a65;margin-top:24px;">Words of the Day</h2>
     ${wordBlock(featured, true)}
     ${bonus.map((w) => wordBlock(w, false)).join("")}
-  </div>`;
+  </div>
+</body>
+</html>`;
+
+  if (url.searchParams.get("debug") === "1") {
+    return new Response(html, { headers: { "Content-Type": "text/html" } });
+  }
 
   const resendRes = await fetch("https://api.resend.com/emails", {
     method: "POST",
