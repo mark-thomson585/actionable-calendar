@@ -2,9 +2,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://mmnjybuvugljecorkoss.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_AuKmTTUz9HSTG-1pIllqug_9DwOhE3f';
+const VAPID_PUBLIC_KEY = 'BBP1ewhJ4qMcGS7WgO6rY3qXeazZL42PPIh_NZvJQq0NPR2PjRnSDxgq8BtoOhtwUUNkuRt9OVH8Wl7sdAkEz-8';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const notifyBtn = document.getElementById('notify-btn');
 const statusEl = document.getElementById('status');
 const dayColumn = document.getElementById('day-column');
 const daysEl = document.getElementById('days');
@@ -707,6 +709,64 @@ const edgeObserver = new IntersectionObserver(
 );
 edgeObserver.observe(topSentinel);
 edgeObserver.observe(bottomSentinel);
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+async function enableNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    notifyBtn.textContent = 'Not supported here';
+    return;
+  }
+
+  notifyBtn.disabled = true;
+  notifyBtn.textContent = 'Enabling…';
+
+  try {
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      notifyBtn.textContent = 'Enable notifications';
+      notifyBtn.disabled = false;
+      return;
+    }
+
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+
+    await fetch('/api/save-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscription),
+    });
+
+    notifyBtn.textContent = 'Notifications on';
+  } catch (err) {
+    notifyBtn.textContent = 'Enable notifications';
+    notifyBtn.disabled = false;
+    statusEl.textContent = 'notification setup failed: ' + err.message;
+  }
+}
+
+async function initNotifyButton() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+    notifyBtn.textContent = 'Not supported here';
+    notifyBtn.disabled = true;
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    notifyBtn.textContent = 'Notifications on';
+  }
+  notifyBtn.addEventListener('click', enableNotifications);
+}
+
+initNotifyButton();
 
 await loadAll();
 statusEl.textContent = 'live';
